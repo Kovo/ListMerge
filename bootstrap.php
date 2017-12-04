@@ -11,3 +11,61 @@ require_once 'Psr4Autoloader.php';
 $loader = new Psr4Autoloader();
 $loader->register();
 $loader->addNamespace('ListMerge\\', 'ListMerge/');
+
+/*
+ * Example
+ */
+$Merge = new \ListMerge\Merge(\ListMerge\Merge::CONFIDENCE_MEDIUM);
+$Merge
+	->addItem('Brand')
+	->addItem('Brands')
+	->addItem('brand')
+	->addItem('brANd')
+	->addItem('Color')
+	->addItem('colour')
+	->addItem('COLOR')
+	->addItem('Colors')
+	->addItem(
+		'Red',
+		array(
+			\ListMerge\Merge::META_DATA_CLASS => array('Color')
+		)
+	)
+	->addItem(
+		'Blue',
+		array(
+			\ListMerge\Merge::META_DATA_CLASS => array('Color')
+		)
+	)
+	->addItem(
+		'Green',
+		array(
+			\ListMerge\Merge::META_DATA_CLASS => array('Color')
+		)
+	)
+	->addItem(
+		'Gren',
+		array(
+			\ListMerge\Merge::META_DATA_CLASS => array('Color')
+		)
+	)
+	->addItem(
+		'GREEN',
+		array(
+			\ListMerge\Merge::META_DATA_CLASS => array('Color')
+		)
+	)
+	->addItem('Blue')
+	->addItem('laptops')
+	->addItem(
+		'Computers',
+		array(
+			\ListMerge\Merge::META_DATA_CLASS => array('Electronics'),
+			\ListMerge\Merge::META_DATA_SYNONYM => array('Laptops', 'Computers & Laptops')
+		)
+	)
+	->addItem('computers');
+
+$merged_list = $Merge->process();
+
+var_dump($merged_list);
