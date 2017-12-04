@@ -230,6 +230,8 @@ class Merge
 
 				$candidates[$key][] = $key2;
 			}
+
+			unset($reordered_items[$key]);
 		}
 
 		return $new_list;
@@ -277,23 +279,70 @@ class Merge
 				$points += 1;
 			}
 
-
 			if(!empty($item_1[self::META_DATA][self::META_DATA_CLASS]) && !empty($item_2[self::META_DATA][self::META_DATA_CLASS]))
 			{
 				$tpoints += 2;
+
+				if(
+					($item_1[self::META_DATA][self::META_DATA_CLASS] === $item_2[self::META_DATA][self::META_DATA_CLASS]) ||
+					$this->_arraySimilarity(
+						$item_1[self::META_DATA][self::META_DATA_CLASS],
+						$item_2[self::META_DATA][self::META_DATA_CLASS]
+					) >= $this->_meta_data_class_threshold
+				)
+				{
+					$points += 2;
+				}
 			}
 
 			if(!empty($item_1[self::META_DATA][self::META_DATA_SYNONYM]) && !empty($item_2[self::META_DATA][self::META_DATA_SYNONYM]))
 			{
 				$tpoints += 2;
+
+				if(
+					($item_1[self::META_DATA][self::META_DATA_SYNONYM] === $item_2[self::META_DATA][self::META_DATA_SYNONYM]) ||
+					$this->_arraySimilarity(
+						$item_1[self::META_DATA][self::META_DATA_SYNONYM],
+						$item_2[self::META_DATA][self::META_DATA_SYNONYM]
+					) >= $this->_meta_data_synonym_threshold
+				)
+				{
+					$points += 2;
+				}
 			}
 
-			if($points/$tpoints >= $this->_score_threshold)
+			if($points/$tpoints*100 >= $this->_score_threshold)
 			{
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * @param array $array_1
+	 * @param array $array_2
+	 * @return float
+	 */
+	private function _arraySimilarity(array $array_1, array $array_2): float
+	{
+		$array_1_size = count($array_1);
+		$array_2_size = count($array_2);
+
+		$array_1_matches = 0;
+
+		foreach($array_1 as $item)
+		{
+			foreach($array_2 as $item2)
+			{
+				if($item === $item2)
+				{
+					$array_1_matches++;
+				}
+			}
+		}
+
+		return $array_1_matches/max($array_1_size,$array_2_size)*100;
 	}
 }

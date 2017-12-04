@@ -65,7 +65,7 @@ $Merge
 		)
 	)
 	->addItem('computers');
-
+echo '<pre>';
 $merged_list = $Merge->process();
-
 var_dump($merged_list);
+echo '</pre>';
