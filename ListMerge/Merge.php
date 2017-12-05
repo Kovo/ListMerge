@@ -237,7 +237,7 @@ class Merge
 			{
 				$new_array = array();
 
-				foreach($candidates as $key => $item2s)
+				foreach($candidates as $item2s)
 				{
 					$new_array[] = array(
 						$reordered_items[$key][self::TERM],
@@ -253,6 +253,11 @@ class Merge
 			}
 
 			unset($reordered_items[$key]);
+		}
+
+		foreach($reordered_items as $item)
+		{
+			$new_list[self::UNCLASSIFIED][] = $item;
 		}
 
 		return $new_list;
