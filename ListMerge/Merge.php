@@ -228,7 +228,28 @@ class Merge
 					continue;
 				}
 
-				$candidates[$key][] = $key2;
+				$candidates[] = $item[self::TERM];
+
+				unset($reordered_items[$key2]);
+			}
+
+			if(!empty($candidates))
+			{
+				$new_array = array();
+
+				foreach($candidates as $key => $item2s)
+				{
+					$new_array[] = array(
+						$reordered_items[$key][self::TERM],
+						$item2s
+					);
+				}
+
+				$new_list[self::CLASSIFIED][] = $new_array;
+
+				$new_array = null;
+				$candidates = null;
+				unset($new_array,$candidates);
 			}
 
 			unset($reordered_items[$key]);
