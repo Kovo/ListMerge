@@ -15,7 +15,7 @@ $loader->addNamespace('ListMerge\\', 'ListMerge/');
 /*
  * Example
  */
-$Merge = new \ListMerge\Merge(\ListMerge\Merge::CONFIDENCE_MEDIUM);
+$Merge = new \ListMerge\Merge(\ListMerge\Merge::CONFIDENCE_HIGH);
 $Merge
 	->addItem('Brand')
 	->addItem('Brands')
@@ -50,10 +50,7 @@ $Merge
 		)
 	)
 	->addItem(
-		'GREEN',
-		array(
-			\ListMerge\Merge::META_DATA_CLASS => array('Color')
-		)
+		'GREEN'
 	)
 	->addItem('Blue')
 	->addItem('laptops')
@@ -66,6 +63,6 @@ $Merge
 	)
 	->addItem('computers');
 echo '<pre>';
-$merged_list = $Merge->process();
+$merged_list = $Merge->process(1);
 echo json_encode($merged_list);
 echo '</pre>';

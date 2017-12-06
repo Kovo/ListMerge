@@ -75,6 +75,11 @@ class Merge
 	private $_items = array();
 
 	/**
+	 * @var array
+	 */
+	private $_items_processed = array();
+
+	/**
 	 * @var null|float
 	 */
 	private $_score_threshold = null;
@@ -103,7 +108,7 @@ class Merge
 	 * Merge constructor.
 	 * @param int $confidence_threshold
 	 */
-	function __construct(int $confidence_threshold = self::CONFIDENCE_MEDIUM)
+	function __construct(int $confidence_threshold = self::CONFIDENCE_HIGH)
 	{
 		$this->_confidence_threshold = $confidence_threshold;
 
@@ -169,7 +174,7 @@ class Merge
 			throw new \Exception('Term cannot be empty.');
 		}
 
-		$this->_items[$term] = array(
+		$this->_items[] = array(
 			self::TERM => $term,
 			self::META_DATA => $meta_data
 		);
@@ -178,24 +183,37 @@ class Merge
 	}
 
 	/**
+	 * @param int $passes
 	 * @return array
 	 * @throws \Exception
 	 */
-	public function process(): array
+	public function process(int $passes = 2): array
 	{
-		$new_list = array(
-			self::CLASSIFIED => array(),
-			self::UNCLASSIFIED => array()
-		);
+		$this->_items_processed = $this->_items;
 
-		if(empty($this->_items))
+		for($x=0;$x<$passes;$x++)
+		{
+			$this->_pass();
+		}
+
+		return $this->_items_processed;
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	private function _pass(): void
+	{
+		$new_list = array();
+
+		if(empty($this->_items_processed))
 		{
 			throw new \Exception('No items provided to ListMerge.');
 		}
 
 		$reordered_items = array();
 
-		foreach($this->_items as $item)
+		foreach($this->_items_processed as $item)
 		{
 			if(empty($item[self::META_DATA]))
 			{
@@ -223,12 +241,17 @@ class Merge
 					continue;
 				}
 
-				if(!$this->_confidenceAchieved($reordered_items[$key], $item))
+				$result = $this->_confidenceAchieved($reordered_items[$key], $item);
+
+				if(!$result[0])
 				{
 					continue;
 				}
 
-				$candidates[] = $item[self::TERM];
+				$candidates[] = array(
+					$item,
+					$result[1]
+				);
 
 				unset($reordered_items[$key2]);
 			}
@@ -240,39 +263,38 @@ class Merge
 				foreach($candidates as $item2s)
 				{
 					$new_array[] = array(
-						$reordered_items[$key][self::TERM],
-						$item2s
+						$reordered_items[$key],
+						$item2s[0],
+						$item2s[1]
 					);
 				}
 
-				$new_list[self::CLASSIFIED][] = $new_array;
+				$new_list[] = $new_array;
 
 				$new_array = null;
 				$candidates = null;
-				unset($new_array,$candidates);
+				unset($new_array,$candidates,$reordered_items[$key]);
 			}
-
-			unset($reordered_items[$key]);
 		}
 
-		foreach($reordered_items as $item)
-		{
-			$new_list[self::UNCLASSIFIED][] = $item;
-		}
+		$this->_items_processed = array_merge($new_list,array_values($reordered_items));
 
-		return $new_list;
+		return;
 	}
 
 	/**
 	 * @param array $item_1
 	 * @param array $item_2
-	 * @return bool
+	 * @return array
 	 */
-	private function _confidenceAchieved(array $item_1, array $item_2): bool
+	private function _confidenceAchieved(array $item_1, array $item_2): array
 	{
 		if($item_1 === $item_2)
 		{
-			return true;
+			return array(
+				true,
+				100
+			);
 		}
 		else
 		{
@@ -339,11 +361,16 @@ class Merge
 
 			if($points/$tpoints*100 >= $this->_score_threshold)
 			{
-				return true;
+				return array(
+					true,
+					$points/$tpoints*100
+				);
 			}
 		}
 
-		return false;
+		return array(
+			false
+		);
 	}
 
 	/**
