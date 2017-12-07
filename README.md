@@ -74,3 +74,40 @@ $merged_list = $Merge->process();
 
 echo json_encode($merged_list);
 ```
+### Result
+```json
+[{
+	"5": "Red",
+	"6": {
+		"1": ["Color"]
+	}
+}, {
+	"5": "Blue",
+	"6": {
+		"1": ["Color"]
+	}
+}, {
+	"5": "Green",
+	"6": {
+		"1": ["Color"]
+	}
+}, {
+	"5": "Laptops",
+	"6": {
+		"1": ["Electronics"],
+		"2": ["Laptops", "Computers & Laptops"]
+	}
+}, {
+	"5": "Computers",
+	"6": {
+		"1": ["Electronics"],
+		"2": ["Laptops", "Computers & Laptops"]
+	}
+}, {
+	"5": "Brands",
+	"6": []
+}, {
+	"5": "Colors",
+	"6": []
+}]
+```
