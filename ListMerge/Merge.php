@@ -67,42 +67,42 @@ class Merge
 	/**
 	 * @var null|int
 	 */
-	private $_confidence_threshold = null;
+	protected $_confidence_threshold = null;
 
 	/**
 	 * @var array
 	 */
-	private $_items = array();
+	protected $_items = array();
 
 	/**
 	 * @var array
 	 */
-	private $_items_processed = array();
+	protected $_items_processed = array();
 
 	/**
 	 * @var null|float
 	 */
-	private $_score_threshold = null;
+	protected $_score_threshold = null;
 
 	/**
 	 * @var null|float
 	 */
-	private $_levenshtein_threshold = null;
+	protected $_levenshtein_threshold = null;
 
 	/**
 	 * @var null|float
 	 */
-	private $_similartext_threshold = null;
+	protected $_similartext_threshold = null;
 
 	/**
 	 * @var null|float
 	 */
-	private $_meta_data_class_threshold = null;
+	protected $_meta_data_class_threshold = null;
 
 	/**
 	 * @var null|float
 	 */
-	private $_meta_data_synonym_threshold = null;
+	protected $_meta_data_synonym_threshold = null;
 
 	/**
 	 * Merge constructor.
@@ -115,6 +115,11 @@ class Merge
 		$this->setThresholds($this->_confidence_threshold);
 	}
 
+	/**
+	 * @param int $confidence_level
+	 * @return Merge
+	 * @throws \Exception
+	 */
 	public function setThresholds(int $confidence_level): self
 	{
 		switch($confidence_level)
@@ -193,6 +198,7 @@ class Merge
 
 		for($x=0;$x<$passes;$x++)
 		{
+			error_log('pass '.$x);
 			$this->_pass();
 		}
 
@@ -202,7 +208,7 @@ class Merge
 	/**
 	 * @throws \Exception
 	 */
-	private function _pass(): void
+	protected function _pass(): void
 	{
 		$new_list = array();
 
@@ -248,24 +254,20 @@ class Merge
 					continue;
 				}
 
-				$candidates[] = array(
-					$item,
-					$result[1]
-				);
+				$candidates[] = $item;
 
 				unset($reordered_items[$key2]);
 			}
 
 			if(!empty($candidates))
 			{
-				$new_array = array();
+				$new_array = $reordered_items[$key];
 
 				foreach($candidates as $item2s)
-				{
-					$new_array[] = array(
-						$reordered_items[$key],
-						$item2s[0],
-						$item2s[1]
+				{error_log('merge '.$new_array[self::TERM].' '.$item2s[self::TERM]);
+					$new_array = array(
+						self::TERM => $this->_betterTerm($new_array[self::TERM], $item2s[self::TERM]),
+						self::META_DATA => $this->_mergeMetaData($new_array[self::META_DATA], $item2s[self::META_DATA])
 					);
 				}
 
@@ -283,11 +285,123 @@ class Merge
 	}
 
 	/**
+	 * @param array $meta_data_1
+	 * @param array $meta_data_2
+	 * @return array
+	 */
+	protected function _mergeMetaData(array $meta_data_1, array $meta_data_2): array
+	{
+		$new_meta_data = array();
+
+		if(empty($meta_data_1[self::META_DATA_CLASS]) && !empty($meta_data_2[self::META_DATA_CLASS]))
+		{
+			$new_meta_data[self::META_DATA_CLASS] = $meta_data_2[self::META_DATA_CLASS];
+		}
+		elseif(!empty($meta_data_1[self::META_DATA_CLASS]) && empty($meta_data_2[self::META_DATA_CLASS]))
+		{
+			$new_meta_data[self::META_DATA_CLASS] = $meta_data_1[self::META_DATA_CLASS];
+		}
+		elseif(!empty($meta_data_1[self::META_DATA_CLASS]) && !empty($meta_data_2[self::META_DATA_CLASS]))
+		{
+			$new_meta_data[self::META_DATA_CLASS] = $meta_data_1[self::META_DATA_CLASS];
+
+			foreach($meta_data_2[self::META_DATA_CLASS] as $class)
+			{
+				if(!in_array($class, $new_meta_data[self::META_DATA_CLASS]))
+				{
+					$new_meta_data[self::META_DATA_CLASS][] = $class;
+				}
+			}
+		}
+
+		if(empty($meta_data_1[self::META_DATA_SYNONYM]) && !empty($meta_data_2[self::META_DATA_SYNONYM]))
+		{
+			$new_meta_data[self::META_DATA_SYNONYM] = $meta_data_2[self::META_DATA_SYNONYM];
+		}
+		elseif(!empty($meta_data_1[self::META_DATA_SYNONYM]) && empty($meta_data_2[self::META_DATA_SYNONYM]))
+		{
+			$new_meta_data[self::META_DATA_SYNONYM] = $meta_data_1[self::META_DATA_SYNONYM];
+		}
+		elseif(!empty($meta_data_1[self::META_DATA_SYNONYM]) && !empty($meta_data_2[self::META_DATA_SYNONYM]))
+		{
+			$new_meta_data[self::META_DATA_SYNONYM] = $meta_data_1[self::META_DATA_SYNONYM];
+
+			foreach($meta_data_2[self::META_DATA_SYNONYM] as $synonym)
+			{
+				if(!in_array($synonym, $new_meta_data[self::META_DATA_SYNONYM]))
+				{
+					$new_meta_data[self::META_DATA_SYNONYM][] = $synonym;
+				}
+			}
+		}
+
+		return $new_meta_data;
+	}
+
+	/**
+	 * @param string $term_1
+	 * @param string $term_2
+	 * @return string
+	 */
+	protected function _betterTerm(string $term_1, string $term_2): string
+	{
+		if($term_1 == $term_2)
+		{
+			return $term_1;
+		}
+
+		$term_1_score = 0;
+		$term_2_score = 0;
+
+		if(mb_strtoupper($term_1, 'UTF-8') !== $term_1)
+		{
+			$term_1_score++;
+		}
+
+		if(mb_strtoupper($term_2, 'UTF-8') !== $term_2)
+		{
+			$term_2_score++;
+		}
+
+		if(ucwords($term_1) === $term_1)
+		{
+			$term_1_score++;
+		}
+
+		if(ucwords($term_2) === $term_2)
+		{
+			$term_2_score++;
+		}
+
+		if(strlen($term_1) > strlen($term_2))
+		{
+			$term_1_score += 2;
+		}
+		elseif(strlen($term_2) > strlen($term_1))
+		{
+			$term_2_score += 2;
+		}
+
+		if($term_1_score > $term_2_score)
+		{
+			return $term_1;
+		}
+		elseif($term_2_score > $term_1_score)
+		{
+			return $term_2;
+		}
+		else
+		{
+			return $term_1;
+		}
+	}
+
+	/**
 	 * @param array $item_1
 	 * @param array $item_2
 	 * @return array
 	 */
-	private function _confidenceAchieved(array $item_1, array $item_2): array
+	protected function _confidenceAchieved(array $item_1, array $item_2): array
 	{
 		if($item_1 === $item_2)
 		{
@@ -302,6 +416,12 @@ class Merge
 			$tpoints = 0;
 			$term_1 = mb_strtolower($item_1[self::TERM], 'UTF-8');
 			$term_2 = mb_strtolower($item_2[self::TERM], 'UTF-8');
+
+			$tpoints += 2;
+			if(substr($term_1,0,1) === substr($term_2,0, 1))
+			{
+				$points += 2;
+			}
 
 			$tpoints += 2;
 			if($term_1 === $term_2)
@@ -378,7 +498,7 @@ class Merge
 	 * @param array $array_2
 	 * @return float
 	 */
-	private function _arraySimilarity(array $array_1, array $array_2): float
+	protected function _arraySimilarity(array $array_1, array $array_2): float
 	{
 		$array_1_size = count($array_1);
 		$array_2_size = count($array_2);
