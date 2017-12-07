@@ -6,6 +6,7 @@ The ListMerge algorithm is meant to consolidate a given list of items to as few 
 
 - ListMerge will not combine cross-class terms. Laptops will never merge with Computers. This is by design, though the algorithm can be tweaked to achieve this result.
 - ListMerge analyzes input data in a vacuum. That is to say, it does not consult remote sources for guidance on its merging decisions. Again, this is by design. Anyone can expand on ListMerge to allow for this kind of interaction.
+- ListMerge has been tested using English Language input. Though other alpha based languages should function correctly at a base level.
 
 # Sample Usage
 
